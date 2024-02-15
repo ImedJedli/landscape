@@ -1,7 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException, Param, Req, UnauthorizedException, UseGuards } from '@nestjs/common';
 const db = require('../../models');
-
+import { Request } from 'express';
 import { User } from '../../models/user.js';
+import { UpdateUserDto } from 'src/auth/auth.dto.js';
+import { AuthGuard } from '@nestjs/passport';
 
 @Injectable()
 export class UsersService {
@@ -27,7 +29,7 @@ export class UsersService {
     try {
       const user = await db.User.findByPk(id);
       if (!user) {
-        return 'user not found';
+        return null;
       }
       return user;
     } catch (error) {
@@ -35,12 +37,12 @@ export class UsersService {
     }
   }
 
-  async updateUserById(id: number, data: any): Promise<string> {
+  async updateUserById(id: number, data: UpdateUserDto): Promise<UpdateUserDto | string> {
     try {
       const user = await this.getUserById(id);
-      if (user != 'user not found') {
+      if (user != 'user not found') { 
         await db.User.update(data, { where: { id: id } });
-        return `User with ID ${id} updated successfully : ${JSON.stringify(data)}`;
+        return data;
       } else {
         return `User with ID ${id} not found.`;
       }
@@ -49,17 +51,30 @@ export class UsersService {
     }
   }
 
-  async deleteUserById(id: number): Promise<string> {
+
+
+  async deleteUserById(id: number): Promise<User | 'user not found'> {
     try {
       const user = await this.getUserById(id);
       if (user != 'user not found') {
         await db.User.destroy({ where: { id: id } });
-        return `User with ID ${id} deleted successfully.`;
+        return user;
       } else {
-        return `User with ID ${id} not found.`;
+        return 'user not found';
       }
     } catch (error) {
-      throw new Error(`failed to get the user ${error.message}`);
+      throw new NotFoundException(`User with ID ${id} not found.`);
+    }
+  }
+  
+
+
+  async findOne(email: string): Promise<User | null> {
+    try {
+      const user = await db.User.findOne({ where: { email: email } });
+      return user ;
+    } catch (error) {
+      throw new Error(`failed to find user ${error.message}`);
     }
   }
 }

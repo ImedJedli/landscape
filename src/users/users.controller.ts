@@ -1,7 +1,23 @@
-import { Body, Controller, Delete, Get, Param, Post, Put } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Post,
+  Put,
+  Req,
+  UseGuards,
+  UsePipes,
+} from '@nestjs/common';
 import { UsersService } from './users.service';
 import { User } from '../../models/user.js';
-@Controller('users')
+import { UpdateUserDto } from '../auth/auth.dto';
+import { ValidationPipeWithErrors } from 'src/middlewares/validation.pipe';
+import { AuthGuard } from '@nestjs/passport';
+import { JwtService } from '@nestjs/jwt';
+
+@Controller('/api/users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
@@ -16,17 +32,21 @@ export class UsersController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id:number):User{
-    return this.usersService.getUserById(id)
+  findOne(@Param('id') id: number): User {
+    return this.usersService.getUserById(id);
   }
 
-  @Delete(":id")
-  remove(@Param('id') id:number):User{
-    return this.usersService.deleteUserById(id)
+  @Delete(':id')
+  remove(@Param('id') id: number): User {
+    return this.usersService.deleteUserById(id);
   }
 
   @Put(':id')
-  update(@Param('id') id:number , @Body() updateUserDto:Partial<User>):User{
-    return this.usersService.updateUserById(id,updateUserDto)
+  @UsePipes(new ValidationPipeWithErrors())
+  async update(
+    @Param('id') id: number,
+    @Body() updateUserDto: UpdateUserDto,
+  ): Promise<UpdateUserDto | string> {
+    return await this.usersService.updateUserById(id, updateUserDto);
   }
 }
