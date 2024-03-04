@@ -1,11 +1,13 @@
 import { PartialType } from '@nestjs/mapped-types';
 import {
   IsEmail,
+  IsIn,
   IsNotEmpty,
   IsString,
   MaxLength,
   MinLength,
 } from 'class-validator';
+import { Role } from 'src/data/interfaces';
 
 export class CreateUserDto {
   @IsString()
@@ -30,7 +32,8 @@ export class CreateUserDto {
   @IsString()
   @MinLength(2)
   @MaxLength(50)
-  role: string;
+  @IsIn(['admin', 'user', 'provider'])
+  role: Role[];
 }
 
 export class LoginDto {
@@ -43,15 +46,7 @@ export class LoginDto {
   @MaxLength(20)
   password: string;
 
-
-
-  image:string;
+  role: Role[];
 }
 
 export class UpdateUserDto extends PartialType(CreateUserDto) {}
-
-declare namespace Express {
-    interface Request {
-      user?: { role: string }; // Define the structure of the user object
-    }
-  }
